@@ -29,7 +29,7 @@ dotnet build
 
 3. Run the application
 ```bash
-dotnet run --project MicrosoftContactManagement
+dotnet run
 ```
 
 4. Use the Application
