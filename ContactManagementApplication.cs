@@ -1,3 +1,4 @@
+using System.Reflection.Metadata;
 using MicrosoftContactManagement.Models;
 using MicrosoftContactManagement.Repositories;
 
@@ -6,8 +7,10 @@ namespace MicrosoftContactManagement;
 public class ContactManagementApplication
 {
     private readonly IContactRepository _contactRepository;
+    private readonly int _menuDelay = 1000;
     private bool _running = true;
-    private int _menuDelay = 1000;
+    private bool _unsaved = false;
+    
     public ContactManagementApplication(IContactRepository contactRepository)
     {
         _contactRepository = contactRepository;
@@ -17,7 +20,6 @@ public class ContactManagementApplication
     {
         try
         {
-
             await _contactRepository.LoadAsync();
 
             Console.WriteLine("Contacts loaded.");
@@ -256,12 +258,15 @@ public class ContactManagementApplication
         {
             case "1":
                 await HandleAddContact();
+                _unsaved = true;
                 break;
             case "2":
                 await HandleEditContact();
+                _unsaved = true;
                 break;
             case "3":
                 await HandleDeleteContact();
+                _unsaved = true;
                 break;
             case "4":
                 await HandleViewContact();
@@ -277,17 +282,39 @@ public class ContactManagementApplication
                 break;
             case "8":
                 await HandleSave();
+                _unsaved = false;
                 break;
             case "9":
+                if (_unsaved) await HandleUnsaved();
                 await HandleExit();
-                // TODO: prompt to save before exit
                 break;
             default:
                 Console.Error.WriteLine("Invalid input. Please enter a number between 1 and 9.");
                 break;
         }
     }
-    
+
+    private async Task HandleUnsaved()
+    {
+        while (true)
+        {
+            string input = ReadInput("You have unsaved changes. Will you save before exiting? (Y/N)").Trim().ToUpper();
+
+            if (input == "Y")
+            {
+                await HandleSave();
+                break;
+            }
+            
+            if (input == "N")
+            {
+                break;
+            }
+
+            Console.WriteLine("Invalid input. Please enter Y or N.");
+        }
+    }
+
     private string ReadInput(string prompt, bool isEmail = false, bool isPhoneNumber = false, bool allowEmpty = false)
     {
         Console.WriteLine(prompt);
