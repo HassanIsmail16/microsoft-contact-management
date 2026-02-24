@@ -21,6 +21,7 @@ public class ContactManagementApplication
             DisplayMenu();
             var input = Console.ReadLine()?.Trim() ?? String.Empty;
             await HandleInput(input);
+            await Task.Delay(1000);
         }
     }
 
@@ -41,7 +42,7 @@ public class ContactManagementApplication
                 // await HandleViewContact();
                 break;
             case "5":
-                // await HandleListContacts();
+                await HandleListContacts();
                 break;
             case "6":
                 // await HandleSearch();
@@ -50,16 +51,47 @@ public class ContactManagementApplication
                 // await HandleFilter();
                 break;
             case "8":
-                // await HandleSave();
+                await HandleSave();
                 break;
             case "9":
-                // await HandleExit();
+                await HandleExit();
+                // TODO: prompt to save before exit
                 break;
             default:
                 Console.Error.WriteLine("Invalid input. Please enter a number between 1 and 9.");
-                await Task.Delay(1000);
                 break;
         }
+    }
+
+    private async Task HandleListContacts()
+    {
+        var contacts = await _contactRepository.GetContactsAsync();
+
+        if (!contacts.Any())
+        {
+            Console.WriteLine("No contacts found.");
+            return;
+        }
+        
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Contact list:");
+        Console.WriteLine(new string('-', 50));
+
+     
+        foreach (var contact in contacts)
+            Console.WriteLine(contact);
+    }
+
+    private async Task HandleSave()
+    {
+        await _contactRepository.SaveAsync();
+        Console.WriteLine("Save complete.");
+    }
+
+    private async Task HandleExit()
+    {
+        Console.WriteLine("Exiting...");
+        _running = false;
     }
 
     private void DisplayMenu()

@@ -11,5 +11,4 @@ public interface IContactRepository
     Task DeleteContactAsync(int id);
     Task SaveAsync();
     Task LoadAsync();
-    // how will we load data ?
 }
