@@ -49,7 +49,7 @@ public class JsonContactRepository(string filePath, JsonSerializerOptions jsonSe
         var existingContact = _contacts.FirstOrDefault(c => c.Id == id); 
         if (existingContact is null)
         { 
-            throw new InvalidOperationException($"Contact with id {id} not found");
+            throw new InvalidOperationException($"Contact with id [{id}] not found");
         }
         
         _contacts.Remove(existingContact);

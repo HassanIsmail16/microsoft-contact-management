@@ -8,6 +8,7 @@ public class ContactManagementApplication
 {
     private readonly IContactRepository _contactRepository;
     private bool _running = true;
+    private int _menuDelay = 1000;
     public ContactManagementApplication(IContactRepository contactRepository)
     {
         _contactRepository = contactRepository;
@@ -22,7 +23,7 @@ public class ContactManagementApplication
             DisplayMenu();
             var input = Console.ReadLine()?.Trim() ?? String.Empty;
             await HandleInput(input);
-            await Task.Delay(1000);
+            await Task.Delay(_menuDelay);
         }
     }
 
@@ -37,7 +38,7 @@ public class ContactManagementApplication
                 // await HandleEditContact();
                 break;
             case "3":
-                // await HandleDeleteContact();
+                await HandleDeleteContact();
                 break;
             case "4":
                 await HandleViewContact();
@@ -61,6 +62,26 @@ public class ContactManagementApplication
             default:
                 Console.Error.WriteLine("Invalid input. Please enter a number between 1 and 9.");
                 break;
+        }
+    }
+
+    private async Task HandleDeleteContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Delete Contact");
+        Console.WriteLine(new string('-', 50));
+        
+        Console.WriteLine("Enter contact id:");
+        var input =  Console.ReadLine()?.Trim();
+
+        if (Int32.TryParse(input, out var id) && id > 0)
+        {
+            await _contactRepository.DeleteContactAsync(id);
+            Console.WriteLine("Contact deleted.");
+        }
+        else
+        {
+            Console.Error.WriteLine("Invalid input.");
         }
     }
 
