@@ -83,4 +83,14 @@ public class JsonContactRepository(string filePath, JsonSerializerOptions jsonSe
         _contacts = JsonSerializer.Deserialize<List<Contact>>(data) ?? new List<Contact>();
         _nextId = _contacts.Any() ? _contacts.Max(c => c.Id) + 1 : 1;
     }
+
+    public Task<IEnumerable<Contact>> GetByKeywordAsync(string? keyword)
+    {
+        // TODO: handle null
+        return Task.FromResult(_contacts.Where(c =>
+            c.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+            c.Email.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+            c.Phone.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+        ));
+    }
 }

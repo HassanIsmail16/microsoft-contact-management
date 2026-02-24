@@ -18,6 +18,22 @@ public class ContactManagementApplication
     {
         await _contactRepository.LoadAsync();
 
+        
+        // TODO: enumerate to list
+        Console.WriteLine("Contacts loaded.");
+        var contacts = await _contactRepository.GetContactsAsync();
+        if (contacts.Any())
+        {
+            foreach (var contact in contacts)
+            {
+                Console.WriteLine(contact);
+            }
+        }
+        else
+        {
+            Console.WriteLine("No contacts found.");
+        }
+
         while (_running)
         {
             DisplayMenu();
@@ -47,7 +63,7 @@ public class ContactManagementApplication
                 await HandleListContacts();
                 break;
             case "6":
-                // await HandleSearch();
+                await HandleSearch();
                 break;
             case "7":
                 // await HandleFilter();
@@ -63,6 +79,23 @@ public class ContactManagementApplication
                 Console.Error.WriteLine("Invalid input. Please enter a number between 1 and 9.");
                 break;
         }
+    }
+
+    private async Task HandleSearch()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Search");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("Enter search keyword: ");
+        var keyword = Console.ReadLine()?.Trim();
+
+        var contacts = await _contactRepository.GetByKeywordAsync(keyword);
+        foreach (var contact in contacts)
+        {
+            Console.WriteLine(contact);
+        }
+        
     }
 
     private async Task HandleEditContact()

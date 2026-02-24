@@ -11,4 +11,5 @@ public interface IContactRepository
     Task DeleteContactAsync(int id);
     Task SaveAsync();
     Task LoadAsync();
+    Task<IEnumerable<Contact>> GetByKeywordAsync(string? keyword);
 }
