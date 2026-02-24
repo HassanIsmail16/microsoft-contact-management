@@ -14,12 +14,12 @@ Supports CRUD operations, searching, filtering, and saving contacts.
 - Async operations for non-blocking IO
 
 ## How to Run
-- You need to have .NET 7 SDK or later
+- You need to have .NET 10 SDK
 
 1. Clone the repository
 ```bash
 git clone https://github.com/HassanIsmail16/microsoft-contact-management.git
-cd MicrosoftContactManagement
+cd microsoft-contact-management
 ```
 
 2. Build the project
