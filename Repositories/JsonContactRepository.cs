@@ -3,15 +3,20 @@ using MicrosoftContactManagement.Models;
 
 namespace MicrosoftContactManagement.Repositories;
 
-public class JsonContactRepository(string filePath, JsonSerializerOptions jsonSerializerOptions)
-    : IContactRepository
+public class JsonContactRepository : IContactRepository
 {
-    private readonly string _filePath = filePath;
-    private readonly JsonSerializerOptions _jsonSerializerOptions = jsonSerializerOptions;
+    private readonly string _filePath;
+    private readonly JsonSerializerOptions _jsonSerializerOptions;
 
     private List<Contact> _contacts;
     private int _nextId = 1;
-    
+
+    public JsonContactRepository(string filePath, JsonSerializerOptions jsonSerializerOptions)
+    {
+        _filePath = filePath;
+        _jsonSerializerOptions = jsonSerializerOptions;
+    }
+
     public Task<IEnumerable<Contact>> GetContactsAsync()
     {
         return Task.FromResult(_contacts.AsEnumerable());

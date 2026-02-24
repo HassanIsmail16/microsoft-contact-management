@@ -1,4 +1,3 @@
-using System.Reflection.Metadata;
 using MicrosoftContactManagement.Models;
 using MicrosoftContactManagement.Repositories;
 
@@ -16,34 +15,242 @@ public class ContactManagementApplication
 
     public async Task RunAsync()
     {
-        await _contactRepository.LoadAsync();
-
-        
-        // TODO: enumerate to list
-        Console.WriteLine("Contacts loaded.");
-        var contacts = await _contactRepository.GetContactsAsync();
-        if (contacts.Any())
+        try
         {
-            foreach (var contact in contacts)
+
+            await _contactRepository.LoadAsync();
+
+            Console.WriteLine("Contacts loaded.");
+
+            var contacts = (await _contactRepository.GetContactsAsync()).ToList();
+
+            if (contacts.Any())
             {
-                Console.WriteLine(contact);
+                foreach (var contact in contacts)
+                {
+                    Console.WriteLine(contact);
+                }
+            }
+            else
+            {
+                Console.WriteLine("No contacts found.");
+            }
+
+            while (_running)
+            {
+                DisplayMenu();
+                var input = Console.ReadLine()?.Trim() ?? String.Empty;
+                await HandleMenuInput(input);
+                await Task.Delay(_menuDelay);
             }
         }
-        else
+        catch (Exception ex)
         {
-            Console.WriteLine("No contacts found.");
-        }
-
-        while (_running)
-        {
-            DisplayMenu();
-            var input = Console.ReadLine()?.Trim() ?? String.Empty;
-            await HandleInput(input);
-            await Task.Delay(_menuDelay);
+            Console.Error.WriteLine($"An error occured... {ex.Message}");
         }
     }
 
-    private async Task HandleInput(string input)
+    private async Task HandleAddContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Add Contact");
+        Console.WriteLine(new string('-', 50));
+        
+        var name = ReadInput("Enter contact name:");
+        var email = ReadInput("Enter contact email: ", isEmail: true);
+        var phone = ReadInput("Enter contact phone number: ", isPhoneNumber: true);
+        
+        var contact = new Contact(name, phone, email);
+        
+        await _contactRepository.InsertContactAsync(contact);
+        Console.WriteLine("Contact added.");
+    }
+    
+    private async Task HandleEditContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Edit Contact");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("Enter contact id:");
+        var input = Console.ReadLine()?.Trim();
+        if (!Int32.TryParse(input, out var id) || id <= 0)
+        {
+            Console.Error.WriteLine("Invalid input.");
+            return;
+        }
+        
+        var contact =  await _contactRepository.GetByIdAsync(id);
+        if (contact is null)
+        {
+            Console.WriteLine($"Contact not found with id [{id}].");
+            return;
+        }
+
+        Console.WriteLine("NOTE: Leave field blank to keep current value");
+
+        var newName = ReadInput($"Name: {contact.Name}", allowEmpty: true);
+        if (!String.IsNullOrEmpty(newName)) contact.Name = newName;
+        
+        var newEmail = ReadInput($"Email: {contact.Email}", isEmail: true, allowEmpty: true);
+        if (!String.IsNullOrEmpty(newEmail)) contact.Email = newEmail;
+        
+        var newPhone = ReadInput($"Phone: {contact.Phone}", isPhoneNumber: true, allowEmpty: true);
+        if (!String.IsNullOrEmpty(newPhone)) contact.Phone = newPhone;
+        
+        await _contactRepository.UpdateContactAsync(contact);
+        Console.WriteLine("Contact updated.");
+
+    }
+
+    private async Task HandleDeleteContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Delete Contact");
+        Console.WriteLine(new string('-', 50));
+        
+        Console.WriteLine("Enter contact id:");
+        var input =  Console.ReadLine()?.Trim() ?? "";
+
+        if (!Int32.TryParse(input, out var id) || id <= 0)
+        {
+            Console.Error.WriteLine("Invalid input.");
+        }
+
+        try
+        {
+            await _contactRepository.DeleteContactAsync(id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            Console.WriteLine($"No contact exists with id [{id}]");
+            return;
+        }
+        
+        Console.WriteLine("Contact deleted.");
+    }
+
+    private async Task HandleViewContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("View Contact");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("Enter contact id:");
+        var input =  Console.ReadLine()?.Trim() ?? "";
+
+        if (!Int32.TryParse(input, out var id) || id <= 0)
+        {
+            Console.Error.WriteLine("Invalid input.");
+            return;
+        }
+
+        var contact = await _contactRepository.GetByIdAsync(id);
+
+        if (contact is null)
+        {
+            Console.WriteLine($"Contact not found with id [{id}].");
+            return;
+        }
+
+        Console.WriteLine(contact);
+    }
+    
+    private async Task HandleListContacts()
+    {
+        var contacts = (await _contactRepository.GetContactsAsync()).ToList();
+
+        if (!contacts.Any())
+        {
+            Console.WriteLine("No contacts found.");
+            return;
+        }
+        
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Contact list:");
+        Console.WriteLine(new string('-', 50));
+
+
+        foreach (var contact in contacts)
+        {
+            Console.WriteLine(contact);
+        }
+    }
+    
+    private async Task HandleSearch()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Search");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("Enter search keyword: ");
+        var keyword = Console.ReadLine()?.Trim();
+
+        var contacts = (await _contactRepository.GetByKeywordAsync(keyword)).ToList();
+
+        if (!contacts.Any())
+        {
+            Console.WriteLine("No contacts found for specified keyword...");
+            return;
+        }
+        
+        foreach (var contact in contacts)
+        {
+            Console.WriteLine(contact);
+        }
+        
+    }
+    
+    private async Task HandleFilter()
+    {   
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Filter Contacts");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("NOTE: Leave field blank to ignore it.");
+
+        Console.WriteLine("Name: ");
+        var name = Console.ReadLine()?.Trim();
+        
+        Console.WriteLine("Email: ");
+        var email= Console.ReadLine()?.Trim();
+
+        Console.WriteLine("Phone: ");
+        var phone = Console.ReadLine()?.Trim();
+
+        Console.WriteLine("Created after (yyyy-MM-dd)): ");
+        DateTime? createdAfter = DateTime.TryParse(Console.ReadLine()?.Trim(), out var afterParsed) ? afterParsed : null;
+
+        Console.WriteLine("Created before (yyyy-MM-dd)): ");
+        DateTime? createdBefore = DateTime.TryParse(Console.ReadLine()?.Trim(), out var beforeParsed) ? beforeParsed : null;
+
+        var contacts = (await _contactRepository.GetByFilterAsync(name, email, phone, createdAfter, createdBefore)).ToList();
+
+        if (!contacts.Any())
+        {
+            Console.WriteLine("No contacts found with specified filters.");
+            return;
+        }
+
+        foreach (var contact in contacts)
+        {
+            Console.WriteLine(contact);
+        }
+    }
+    
+    private async Task HandleSave()
+    {
+        await _contactRepository.SaveAsync();
+        Console.WriteLine("Save complete.");
+    }
+
+    private async Task HandleExit()
+    {
+        Console.WriteLine("Exiting...");
+        _running = false;
+    }
+
+    private async Task HandleMenuInput(string input)
     {
         switch (input)
         {
@@ -80,204 +287,43 @@ public class ContactManagementApplication
                 break;
         }
     }
-
-    private async Task HandleFilter()
-    {   
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("Filter Contacts");
-        Console.WriteLine(new string('-', 50));
-
-        Console.WriteLine("NOTE: Leave field blank to ignore it.");
-
-        Console.WriteLine("Name: ");
-        var name = Console.ReadLine()?.Trim();
-        
-        Console.WriteLine("Email: ");
-        var email= Console.ReadLine()?.Trim();
-
-        Console.WriteLine("Phone: ");
-        var phone = Console.ReadLine()?.Trim();
-
-        Console.WriteLine("Created after (yyyy-MM-dd)): ");
-        DateTime? createdAfter = DateTime.TryParse(Console.ReadLine()?.Trim(), out var afterParsed) ? afterParsed : null;
-
-        Console.WriteLine("Created before (yyyy-MM-dd)): ");
-        DateTime? createdBefore = DateTime.TryParse(Console.ReadLine()?.Trim(), out var beforeParsed) ? beforeParsed : null;
-
-        var contacts = await _contactRepository.GetByFilterAsync(name, email, phone, createdAfter, createdBefore);
-
-        if (!contacts.Any())
-        {
-            Console.WriteLine("No contacts found with specified filters.");
-            return;
-        }
-
-        foreach (var contact in contacts)
-        {
-            Console.WriteLine(contact);
-        }
-    }
     
-
-    private async Task HandleSearch()
+    private string ReadInput(string prompt, bool isEmail = false, bool isPhoneNumber = false, bool allowEmpty = false)
     {
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("Search");
-        Console.WriteLine(new string('-', 50));
-
-        Console.WriteLine("Enter search keyword: ");
-        var keyword = Console.ReadLine()?.Trim();
-
-        var contacts = await _contactRepository.GetByKeywordAsync(keyword);
-        foreach (var contact in contacts)
-        {
-            Console.WriteLine(contact);
-        }
+        Console.WriteLine(prompt);
+    
+        var input = Console.ReadLine()?.Trim() ?? "";
         
-    }
-
-    private async Task HandleEditContact()
-    {
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("Edit Contact");
-        Console.WriteLine(new string('-', 50));
-
-        Console.WriteLine("Enter contact id:");
-        var input = Console.ReadLine()?.Trim();
-        if (Int32.TryParse(input, out var id) && id > 0)
+        if (string.IsNullOrEmpty(input))
         {
-            var contact =  await _contactRepository.GetByIdAsync(id);
-            if (contact is null)
+            if (allowEmpty)
             {
-                Console.WriteLine($"Contact not found with id [{id}].");
-                return;
+                return input;
             }
-
-            Console.WriteLine("NOTE: Leave field blank to keep current value");
             
-            Console.WriteLine($"Name: {contact.Name}");
-            var newName = Console.ReadLine()?.Trim();
-            if (!String.IsNullOrEmpty(newName)) contact.Name = newName;
-            
-            Console.WriteLine($"Email: {contact.Email}");
-            var newEmail = Console.ReadLine()?.Trim();
-            if (!String.IsNullOrEmpty(newEmail)) contact.Email = newEmail;
-            
-            Console.WriteLine($"Phone: {contact.Phone}");
-            var newPhone = Console.ReadLine()?.Trim();
-            if (!String.IsNullOrEmpty(newPhone)) contact.Phone = newPhone;
-            
-            await _contactRepository.UpdateContactAsync(contact);
-            Console.WriteLine("Contact updated.");
-        }
-        else
-        {
-            Console.Error.WriteLine("Invalid input.");
+            Console.Error.WriteLine("Invalid input. Cannot be empty.");
+            return ReadInput(prompt, isEmail, isPhoneNumber);
         }
 
-    }
-
-    private async Task HandleDeleteContact()
-    {
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("Delete Contact");
-        Console.WriteLine(new string('-', 50));
-        
-        Console.WriteLine("Enter contact id:");
-        var input =  Console.ReadLine()?.Trim();
-
-        if (Int32.TryParse(input, out var id) && id > 0)
+        if (isEmail && !input.Contains("@"))
         {
-            await _contactRepository.DeleteContactAsync(id);
-            Console.WriteLine("Contact deleted.");
+            // minimal validation for development purposes
+            Console.Error.WriteLine("Invalid email format..");
+            return ReadInput(prompt, isEmail, isPhoneNumber);
         }
-        else
+
+        if (isPhoneNumber)
         {
-            Console.Error.WriteLine("Invalid input.");
-        }
-    }
-
-    private async Task HandleViewContact()
-    {
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("View Contact");
-        Console.WriteLine(new string('-', 50));
-
-        Console.WriteLine("Enter contact id:");
-        var input =  Console.ReadLine()?.Trim();
-
-        if (Int32.TryParse(input, out var id) && id > 0)
-        {
-            var contact = await _contactRepository.GetByIdAsync(id);
-
-            if (contact is null)
+            // minimal validation for development purposes
+            var digitsOnly = new string(input.Where(char.IsDigit).ToArray());
+            if (digitsOnly.Length < 7)
             {
-                Console.WriteLine($"Contact not found with id [{id}].");
-                return;
+                Console.Error.WriteLine("Invalid phone number. Must contain at least 7 digits.");
+                return ReadInput(prompt, isEmail, isPhoneNumber);
             }
-
-            Console.WriteLine(contact);
         }
-        else
-        {
-            Console.Error.WriteLine("Invalid input.");
-        }
-    }
-
-    private async Task HandleAddContact()
-    {
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("Add Contact");
-        Console.WriteLine(new string('-', 50));
-        
-        // TODO: need to handle empty/null 
-        
-        Console.WriteLine("Enter contact name:");
-        var name = Console.ReadLine();
-        
-        // TODO: validate email
-        Console.WriteLine("Enter contact email:");
-        var email = Console.ReadLine();
-        
-        // TODO: validate phone
-        Console.WriteLine("Enter contact phone number:");
-        var phone = Console.ReadLine();
-        
-        var contact = new Contact(name, email, phone);
-        
-        await _contactRepository.InsertContactAsync(contact);
-        Console.WriteLine("Contact added.");
-    }
-
-    private async Task HandleListContacts()
-    {
-        var contacts = await _contactRepository.GetContactsAsync();
-
-        if (!contacts.Any())
-        {
-            Console.WriteLine("No contacts found.");
-            return;
-        }
-        
-        Console.WriteLine(new string('-', 50));
-        Console.WriteLine("Contact list:");
-        Console.WriteLine(new string('-', 50));
-
-     
-        foreach (var contact in contacts)
-            Console.WriteLine(contact);
-    }
-
-    private async Task HandleSave()
-    {
-        await _contactRepository.SaveAsync();
-        Console.WriteLine("Save complete.");
-    }
-
-    private async Task HandleExit()
-    {
-        Console.WriteLine("Exiting...");
-        _running = false;
+    
+        return input;
     }
 
     private void DisplayMenu()
