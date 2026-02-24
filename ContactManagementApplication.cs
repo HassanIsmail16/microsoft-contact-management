@@ -1,4 +1,5 @@
 using System.Reflection.Metadata;
+using MicrosoftContactManagement.Models;
 using MicrosoftContactManagement.Repositories;
 
 namespace MicrosoftContactManagement;
@@ -30,7 +31,7 @@ public class ContactManagementApplication
         switch (input)
         {
             case "1":
-                // await HandleAddContact();
+                await HandleAddContact();
                 break;
             case "2":
                 // await HandleEditContact();
@@ -61,6 +62,31 @@ public class ContactManagementApplication
                 Console.Error.WriteLine("Invalid input. Please enter a number between 1 and 9.");
                 break;
         }
+    }
+
+    private async Task HandleAddContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Add Contact");
+        Console.WriteLine(new string('-', 50));
+        
+        // TODO: need to handle empty/null 
+        
+        Console.WriteLine("Enter contact name:");
+        var name = Console.ReadLine();
+        
+        // TODO: validate email
+        Console.WriteLine("Enter contact email:");
+        var email = Console.ReadLine();
+        
+        // TODO: validate phone
+        Console.WriteLine("Enter contact phone number:");
+        var phone = Console.ReadLine();
+        
+        var contact = new Contact(name, email, phone);
+        
+        await _contactRepository.InsertContactAsync(contact);
+        Console.WriteLine("Contact added.");
     }
 
     private async Task HandleListContacts()
