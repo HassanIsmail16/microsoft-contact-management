@@ -40,7 +40,7 @@ public class ContactManagementApplication
                 // await HandleDeleteContact();
                 break;
             case "4":
-                // await HandleViewContact();
+                await HandleViewContact();
                 break;
             case "5":
                 await HandleListContacts();
@@ -61,6 +61,33 @@ public class ContactManagementApplication
             default:
                 Console.Error.WriteLine("Invalid input. Please enter a number between 1 and 9.");
                 break;
+        }
+    }
+
+    private async Task HandleViewContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("View Contact");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("Enter contact id:");
+        var input =  Console.ReadLine()?.Trim();
+
+        if (Int32.TryParse(input, out var id) && id > 0)
+        {
+            var contact = await _contactRepository.GetByIdAsync(id);
+
+            if (contact is null)
+            {
+                Console.WriteLine($"Contact not found with id [{id}].");
+                return;
+            }
+
+            Console.WriteLine(contact);
+        }
+        else
+        {
+            Console.Error.WriteLine("Invalid input.");
         }
     }
 
