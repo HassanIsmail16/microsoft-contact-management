@@ -1,9 +1,18 @@
-﻿namespace microsoft_contact_management;
+﻿using System.Text.Json;
+using MicrosoftContactManagement.Models;
+using MicrosoftContactManagement.Repositories;
+
+namespace MicrosoftContactManagement;
 
 class Program
 {
-    static void Main(string[] args)
+    static async Task Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        JsonContactRepository repo = new JsonContactRepository(
+            "contacts.json", 
+            new JsonSerializerOptions{ WriteIndented = true }
+        );
+        ContactManagementApplication app = new ContactManagementApplication(repo);
+        await app.RunAsync();
     }
 }
