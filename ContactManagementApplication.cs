@@ -35,7 +35,7 @@ public class ContactManagementApplication
                 await HandleAddContact();
                 break;
             case "2":
-                // await HandleEditContact();
+                await HandleEditContact();
                 break;
             case "3":
                 await HandleDeleteContact();
@@ -63,6 +63,47 @@ public class ContactManagementApplication
                 Console.Error.WriteLine("Invalid input. Please enter a number between 1 and 9.");
                 break;
         }
+    }
+
+    private async Task HandleEditContact()
+    {
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Edit Contact");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("Enter contact id:");
+        var input = Console.ReadLine()?.Trim();
+        if (Int32.TryParse(input, out var id) && id > 0)
+        {
+            var contact =  await _contactRepository.GetByIdAsync(id);
+            if (contact is null)
+            {
+                Console.WriteLine($"Contact not found with id [{id}].");
+                return;
+            }
+
+            Console.WriteLine("NOTE: Leave field blank to keep current value");
+            
+            Console.WriteLine($"Name: {contact.Name}");
+            var newName = Console.ReadLine()?.Trim();
+            if (!String.IsNullOrEmpty(newName)) contact.Name = newName;
+            
+            Console.WriteLine($"Email: {contact.Email}");
+            var newEmail = Console.ReadLine()?.Trim();
+            if (!String.IsNullOrEmpty(newEmail)) contact.Email = newEmail;
+            
+            Console.WriteLine($"Phone: {contact.Phone}");
+            var newPhone = Console.ReadLine()?.Trim();
+            if (!String.IsNullOrEmpty(newPhone)) contact.Phone = newPhone;
+            
+            await _contactRepository.UpdateContactAsync(contact);
+            Console.WriteLine("Contact updated.");
+        }
+        else
+        {
+            Console.Error.WriteLine("Invalid input.");
+        }
+
     }
 
     private async Task HandleDeleteContact()
