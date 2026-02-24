@@ -91,7 +91,8 @@ public class JsonContactRepository : IContactRepository
 
     public Task<IEnumerable<Contact>> GetByKeywordAsync(string? keyword)
     {
-        // TODO: handle null
+        if (string.IsNullOrEmpty(keyword)) return Task.FromResult(_contacts.AsEnumerable());
+        
         return Task.FromResult(_contacts.Where(c =>
             c.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
             c.Email.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
