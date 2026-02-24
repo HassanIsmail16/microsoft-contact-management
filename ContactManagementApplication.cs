@@ -66,7 +66,7 @@ public class ContactManagementApplication
                 await HandleSearch();
                 break;
             case "7":
-                // await HandleFilter();
+                await HandleFilter();
                 break;
             case "8":
                 await HandleSave();
@@ -80,6 +80,44 @@ public class ContactManagementApplication
                 break;
         }
     }
+
+    private async Task HandleFilter()
+    {   
+        Console.WriteLine(new string('-', 50));
+        Console.WriteLine("Filter Contacts");
+        Console.WriteLine(new string('-', 50));
+
+        Console.WriteLine("NOTE: Leave field blank to ignore it.");
+
+        Console.WriteLine("Name: ");
+        var name = Console.ReadLine()?.Trim();
+        
+        Console.WriteLine("Email: ");
+        var email= Console.ReadLine()?.Trim();
+
+        Console.WriteLine("Phone: ");
+        var phone = Console.ReadLine()?.Trim();
+
+        Console.WriteLine("Created after (yyyy-MM-dd)): ");
+        DateTime? createdAfter = DateTime.TryParse(Console.ReadLine()?.Trim(), out var afterParsed) ? afterParsed : null;
+
+        Console.WriteLine("Created before (yyyy-MM-dd)): ");
+        DateTime? createdBefore = DateTime.TryParse(Console.ReadLine()?.Trim(), out var beforeParsed) ? beforeParsed : null;
+
+        var contacts = await _contactRepository.GetByFilterAsync(name, email, phone, createdAfter, createdBefore);
+
+        if (!contacts.Any())
+        {
+            Console.WriteLine("No contacts found with specified filters.");
+            return;
+        }
+
+        foreach (var contact in contacts)
+        {
+            Console.WriteLine(contact);
+        }
+    }
+    
 
     private async Task HandleSearch()
     {

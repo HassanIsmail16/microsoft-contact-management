@@ -93,4 +93,16 @@ public class JsonContactRepository(string filePath, JsonSerializerOptions jsonSe
             c.Phone.Contains(keyword, StringComparison.OrdinalIgnoreCase)
         ));
     }
+
+    public Task<IEnumerable<Contact>> GetByFilterAsync(string? name, string? email, string? phone, DateTime? createdAfter, DateTime? createdBefore)
+    {
+        var contacts = _contacts
+            .Where(c => string.IsNullOrEmpty(name) || c.Name.Contains(name, StringComparison.OrdinalIgnoreCase))
+            .Where(c => string.IsNullOrEmpty(email) || c.Email.Contains(email, StringComparison.OrdinalIgnoreCase))
+            .Where(c => string.IsNullOrEmpty(phone) || c.Phone.Contains(phone, StringComparison.OrdinalIgnoreCase))
+            .Where(c => createdAfter is null || c.CreationDate >= createdAfter)
+            .Where(c => createdBefore is null || c.CreationDate <= createdBefore);
+
+        return Task.FromResult(contacts);
+    }
 }

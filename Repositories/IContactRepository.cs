@@ -12,4 +12,5 @@ public interface IContactRepository
     Task SaveAsync();
     Task LoadAsync();
     Task<IEnumerable<Contact>> GetByKeywordAsync(string? keyword);
+    Task<IEnumerable<Contact>> GetByFilterAsync(string? name, string? email, string? phone, DateTime? createdAfter, DateTime? createdBefore);
 }
